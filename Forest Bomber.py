@@ -9,14 +9,17 @@ WHITE = (255, 255, 255)
 BLUE = (63, 111, 182)
 
 # Define constants
-SCREENWIDTH = 640
-SCREENHEIGHT = 480
+SCREENWIDTH = 400 #640
+SCREENHEIGHT = 300 #480
 SCOREBOARDMARGIN = 4
 TEXTLINEHEIGHT = 18
 
 
 MAXTREES = 12
 TREE_Y = 266
+TREESPACING = 25
+FIRSTTREEX = 100
+
 LANDING_HEIGHT = 285
 PLANE_START_X = 0
 PLANE_START_Y = 35
@@ -54,6 +57,7 @@ bomb_x = 0
 bomb_y = 0
 bomb_rectangle = bomb_image.get_rect()
 bomb_width = bomb_rectangle.width
+bomb_height = bomb_rectangle.height
 
 burning_tree = 0
 burning_tree_time = 0
@@ -61,16 +65,20 @@ burning_tree_time = 0
 plane_rectangle = plane_image.get_rect()
 plane_width = plane_rectangle.width
 
+tree_rectangle = tree_image.get_rect()
+tree_width = tree_rectangle.width
+tree_height = tree_rectangle.height
+
 
 # Set up forest
-forest_1 = [1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1]
-forest_2 = [0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1]
-forest_3 = [1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0]
-forest_4 = [1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0]
-forest_5 = [0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1]
-forest_6 = [1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1]
-forest_7 = [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1]
-forest_8 = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+forest_1 = ["T", "-", "T", "-", "-", "-", "T", "-", "-", "-", "-", "T"]
+forest_2 = ["-", "T", "-", "-", "T", "-", "T", "-", "T", "T", "-", "T"]
+forest_3 = ["T", "T", "-", "-", "T", "-", "T", "T", "T", "T", "-", "-"]
+forest_4 = ["T", "T", "-", "-", "T", "T", "T", "-", "T", "T", "T", "-"]
+forest_5 = ["-", "T", "T", "-", "T", "T", "T", "-", "T", "T", "T", "T"]
+forest_6 = ["T", "T", "T", "-", "T", "T", "T", "-", "T", "T", "T", "T"]
+forest_7 = ["T", "T", "T", "T", "T", "T", "T", "-", "T", "T", "T", "T"]
+forest_8 = ["T", "T", "T", "T", "T", "T", "T", "T", "T", "T", "T", "T"]
 forest = list(forest_1)
 
 while True: # main game loop
@@ -90,6 +98,7 @@ while True: # main game loop
                 forest = list(forest_1)
                 plane_x = PLANE_START_X
                 plane_y = PLANE_START_Y
+                display_message = False
         elif key_pressed[pygame.K_RETURN] and level_cleared is True:
                 level_cleared = False
                 level = level + 1
@@ -116,21 +125,16 @@ while True: # main game loop
                     
                 plane_x = PLANE_START_X
                 plane_y = PLANE_START_Y
-                display_message = True
+                display_message = False
                 
 
-    if event.type == QUIT:
-            pygame.quit()     
+        if event.type == QUIT:
+            pygame.quit()
             sys.exit()
 
     game_screen.blit(background_image, [0,0])
 
 
-
-
-
-
-    
     # Display plane
     if plane_exploded is False:
         game_screen.blit(plane_image, [plane_x, plane_y])
@@ -139,10 +143,10 @@ while True: # main game loop
 
     #Display forest trees
     for counter in range(0, MAXTREES):
-        tree_x = counter * 25 + 100
-        if forest[counter] == 1:
+        tree_x = FIRSTTREEX + counter * TREESPACING
+        if forest[counter] == "T":
             game_screen.blit(tree_image, [tree_x, TREE_Y])
-        elif forest[counter] == 2:
+        elif forest[counter] == "B":
             game_screen.blit(burning_tree_image, [tree_x, TREE_Y])  
     
     #Move plane
@@ -155,6 +159,27 @@ while True: # main game loop
     # Display bomb
     if bombing is True:
         game_screen.blit(bomb_image, [bomb_x, bomb_y])
+
+        for counter in range(0, MAXTREES):
+            if forest[counter] == "T":
+                tree_left = FIRSTTREEX + counter * TREESPACING
+                tree_right = FIRSTTREEX + counter * TREESPACING + tree_width
+                tree_top = TREE_Y
+                tree_bottom = TREE_Y + tree_height
+
+                bomb_left = bomb_x
+                bomb_right = bomb_x + bomb_width
+                bomb_top = bomb_y
+                bomb_bottom = bomb_y + bomb_height
+
+                if bomb_bottom >= tree_top and bomb_top <= tree_bottom and bomb_right >= tree_left and bomb_left <= tree_right:
+                    forest[counter] = "B"
+                    bombing = False
+                    burning_tree = counter
+                    burning_tree_time = 10
+                    score = score + 10 * level
+
+
         bomb_y = bomb_y + 5
         bomb_x = bomb_x + 3
         if bomb_y > SCREENHEIGHT:
@@ -162,17 +187,8 @@ while True: # main game loop
         if bomb_x > SCREENWIDTH:
             bombing = False
 
-        if bomb_y > TREE_Y:
-            tree_position = int((bomb_x + bomb_width - 100) / 25)
-            if tree_position > MAXTREES - 1:
-                tree_position = MAXTREES - 1
-                
-            if forest[tree_position] == 1:
-                forest[tree_position] = 2
-                bombing = False
-                burning_tree = tree_position
-                burning_tree_time = 10
-                score = score + 10 * level
+
+
 
     #Burn tree
     if burning_tree_time > 0:
@@ -188,10 +204,11 @@ while True: # main game loop
         if plane_front >= SCREENWIDTH:
             level_cleared = True
         else:
-            if plane_front > 100:
-                tree_position = int((plane_front - 100) / 25)
-                if forest[tree_position] > 0:
-                    plane_exploded = True
+            for counter in range(0, MAXTREES):
+                if forest[counter] == "T" or forest[counter] == "B":
+                    tree_left = FIRSTTREEX + counter * TREESPACING
+                    if plane_front >= tree_left:
+                        plane_exploded = True
 
         if score > hi_score:
             hi_score = score
@@ -217,9 +234,6 @@ while True: # main game loop
 
     if plane_exploded is True or level_cleared is True:
         display_message = True
-
-
-
 
     if display_message is True:
 
