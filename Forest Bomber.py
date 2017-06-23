@@ -109,8 +109,8 @@ while True: # main game loop
                 level_cleared = False
 
             elif level_cleared is True:
+                level += 1
                 level_cleared = False
-                level = level + 1
                 if level == 2:
                     forest = list(forest_2)
                 elif level == 3:
@@ -144,11 +144,13 @@ while True: # main game loop
         game_screen.blit(burning_plane_image, [plane_x, plane_y])    
 
     #Display forest trees
-    for counter in range(len(forest)):
-        tree_x = FIRSTTREEX + counter * TREESPACING
-        if forest[counter] == "T":
+    for tree_number, tree in enumerate (forest):
+        tree_x = FIRSTTREEX + tree_number * TREESPACING
+        #if forest[tree_number] == "T":
+        if tree == "T":
             game_screen.blit(tree_image, [tree_x, tree_y])
-        elif forest[counter] == "B":
+        #elif forest[tree_number] == "B":
+        elif tree == "B":
             game_screen.blit(burning_tree_image, [tree_x, tree_y])
     
     #Move plane
