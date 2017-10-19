@@ -34,6 +34,8 @@ PLANE_START_Y = 54
 
 # Setup
 os.environ['SDL_VIDEO_CENTERED'] = '1'
+pygame.mixer.pre_init(44100, -16, 2, 512)
+pygame.mixer.init()
 pygame.init()
 game_screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Forest Bomber')
@@ -48,6 +50,10 @@ plane_image = pygame.image.load('plane.png').convert_alpha()
 burn_plane_image = pygame.image.load('burning_plane.png').convert_alpha()
 bomb_image = pygame.image.load('bomb.png').convert_alpha()
 
+# Load sounds
+explosion_sound = pygame.mixer.Sound('explosion.ogg')
+tree_sound = pygame.mixer.Sound('tree_explosion.ogg')
+
 # Initialise variables
 level = 1
 score = 0
@@ -57,6 +63,7 @@ speed_boost = 0
 plane_exploded = False
 level_cleared = False
 plane_front = 0
+plane_explode_sound_played = False
 
 
 bomb_dropped = False
@@ -100,6 +107,7 @@ while True:
             # Plane has exploded or all levels completed - so go back to start
             if plane_exploded is True or (level == TOTAL_LEVELS and level_cleared is True):
                 plane_exploded = False
+                plane_explode_sound_played = False
                 score = 0
                 speed_boost = 0
                 level = 1
@@ -133,6 +141,7 @@ while True:
     # Update plane location
     if level_cleared is False and plane_exploded is False:
         plane.x = plane.x + 5 + speed_boost
+
         if plane.x >= SCREEN_WIDTH:
             plane.x = 0
             plane.y += 100
@@ -141,8 +150,10 @@ while True:
     if bomb_dropped is True:
         bomb.y += 5
         bomb.x += 3
+
         if bomb.y > SCREEN_HEIGHT:
             bomb_dropped = False
+
         if bomb.x > SCREEN_WIDTH:
             bomb_dropped = False
 
@@ -157,6 +168,7 @@ while True:
                     burning_trees.append(column)
                     tree_timer = 10
                     score += 10 * level
+                    tree_sound.play()
 
     # Update burning trees tree status
     if tree_timer > 0:
@@ -235,6 +247,10 @@ while True:
 
             text_line_2 = font.render('RETURN for new game', True, WHITE)
             text_rect_2 = text_line_2.get_rect()
+
+            if plane_explode_sound_played is False:
+                explosion_sound.play()
+                plane_explode_sound_played = True
 
         elif level == TOTAL_LEVELS:
             text_line_1 = font.render('GAME OVER - ALL LEVELS CLEARED', True, WHITE)
